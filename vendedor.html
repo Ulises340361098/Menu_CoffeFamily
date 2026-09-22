@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>POS • Coffee Family</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: { apple: { dark: '#070709', card: 'rgba(255, 255, 255, 0.05)' } }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background-color: #070709; color: white; -webkit-tap-highlight-color: transparent; position: relative; overflow-x: hidden; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .glass-panel { background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+    .glass-active { background: rgba(124, 58, 237, 0.15); border: 1px solid rgba(124, 58, 237, 0.4); box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); }
+    
+    /* Silueta Neón Pura */
+    .neon-otter {
+      filter: brightness(0) invert(1) drop-shadow(0 0 10px #c084fc) drop-shadow(0 0 25px #a855f7);
+      opacity: 0.7;
+      animation: neon-flicker 4s infinite alternate;
+    }
+
+    @keyframes neon-flicker {
+      0%, 100% { opacity: 0.7; }
+      30% { opacity: 0.6; }
+      32% { opacity: 0.3; filter: brightness(0) invert(1) drop-shadow(0 0 2px #c084fc); }
+      34% { opacity: 0.7; }
+      60% { opacity: 0.7; }
+      62% { opacity: 0.1; filter: brightness(0) invert(1); } 
+      64% { opacity: 0.7; }
+    }
+  </style>
+</head>
+<body class="antialiased pb-10">
+
+  <!-- NUTRIA NEÓN (Botón Secreto de Reset) -->
+  <div class="fixed bottom-6 right-6 z-20 pointer-events-none flex flex-col items-center rotate-[-5deg]">
+    <!-- pointer-events-auto permite que SOLO la nutria sea clickeable sin bloquear el fondo -->
+    <button onclick="resetVentasDia()" class="pointer-events-auto text-6xl neon-otter cursor-pointer active:scale-75 transition-transform" title="Reiniciar venta del día">🦦</button>
+    <div class="text-[9px] font-bold tracking-[0.2em] text-purple-300 mt-2 uppercase opacity-60" style="text-shadow: 0 0 10px #a855f7;">POS System</div>
+  </div>
+
+  <!-- VISTA 1: TABLERO DE MESAS -->
+  <div id="view-tables" class="max-w-md mx-auto p-4 relative z-10">
+    <header class="mb-6 mt-4 text-center">
+      <h1 class="text-2xl font-bold tracking-tight">Comandas</h1>
+      <p class="text-slate-400 text-sm">Selecciona una mesa para abrir o editar</p>
+    </header>
+
+    <!-- Resumen del día -->
+    <div class="glass-panel rounded-2xl p-4 mb-6 flex justify-between items-center">
+      <span class="text-slate-300 text-sm font-medium">Venta Acumulada</span>
+      <span id="daily-total" class="text-xl font-bold text-green-400">$0.00</span>
+    </div>
+
+    <!-- Grid de 20 Mesas -->
+    <div id="tables-grid" class="grid grid-cols-4 gap-3">
+      <!-- Se generan con JS -->
+    </div>
+  </div>
+
+  <!-- VISTA 2: DETALLE DE ORDEN -->
+  <div id="view-order" class="hidden max-w-md mx-auto p-4 flex flex-col h-screen relative z-10">
+    
+    <!-- Cabecera Mesa -->
+    <header class="flex justify-between items-center mb-4 mt-2">
+      <button onclick="showTables()" class="bg-white/10 px-4 py-2 rounded-xl text-sm font-medium active:scale-95 transition-transform">← Volver</button>
+      <h2 id="current-table-title" class="text-xl font-bold">Mesa X</h2>
+      <div class="w-16"></div>
+    </header>
+
+    <!-- Cuenta actual -->
+    <div class="glass-panel rounded-2xl p-4 mb-4 shrink-0 shadow-lg relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 blur-3xl rounded-full pointer-events-none"></div>
+
+      <h3 class="text-xs text-slate-400 uppercase tracking-wider font-bold mb-2">Cuenta actual</h3>
+      
+      <div id="order-items" class="space-y-2 max-h-40 overflow-y-auto no-scrollbar mb-3 relative z-10">
+        <!-- Items de la mesa -->
+      </div>
+
+      <div class="border-t border-white/10 pt-3 flex justify-between items-end relative z-10">
+        <span class="text-slate-300 font-medium">Total a pagar</span>
+        <span id="order-total" class="text-3xl font-bold text-white">$0</span>
+      </div>
+      
+      <button onclick="openCheckout()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl mt-4 active:scale-95 transition-transform shadow-[0_0_15px_rgba(124,58,237,0.4)] relative z-10">
+        Cobrar y Cerrar Mesa
+      </button>
+    </div>
+
+    <!-- Catálogo Rápido -->
+    <div class="flex gap-2 overflow-x-auto no-scrollbar mb-4 shrink-0">
+      <button onclick="renderMenu('Café')" class="cat-btn bg-white/20 px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap">Café</button>
+      <button onclick="renderMenu('Frías')" class="cat-btn bg-white/5 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap text-slate-300">Frías</button>
+      <button onclick="renderMenu('Dulce')" class="cat-btn bg-white/5 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap text-slate-300">Dulce</button>
+      <button onclick="renderMenu('Salado')" class="cat-btn bg-white/5 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap text-slate-300">Salado</button>
+      <button onclick="renderMenu('Extras')" class="cat-btn bg-white/5 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap text-slate-300">Extras</button>
+    </div>
+
+    <!-- Botones de Productos -->
+    <div id="menu-grid" class="grid grid-cols-2 gap-2 overflow-y-auto pb-6 relative z-10">
+      <!-- Se generan con JS -->
+    </div>
+  </div>
+
+  <!-- MODAL DE COBRO -->
+  <div id="checkout-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-sm rounded-3xl p-6">
+      <h3 class="text-xl font-bold mb-4 text-center">Cerrar Cuenta</h3>
+      <p class="text-center text-slate-400 mb-2">Total a cobrar:</p>
+      <p id="checkout-total" class="text-4xl font-bold text-center text-white mb-6">$0</p>
+      
+      <div class="mb-6">
+        <label class="text-sm text-slate-400 mb-1 block">¿Con cuánto pagan?</label>
+        <input type="number" id="cash-input" class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-xl focus:outline-none focus:border-purple-500 text-center" placeholder="$0.00" oninput="calculateChange()">
+      </div>
+
+      <div class="flex justify-between items-center bg-white/5 p-4 rounded-xl mb-6">
+        <span class="text-slate-300">Cambio a entregar:</span>
+        <span id="change-display" class="text-2xl font-bold text-green-400">$0</span>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="closeCheckout()" class="flex-1 bg-white/10 py-3 rounded-xl font-medium active:scale-95">Cancelar</button>
+        <button onclick="confirmPayment()" class="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl active:scale-95 shadow-[0_0_15px_rgba(34,197,94,0.4)]">Confirmar Cobro</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendedor.js"></script>
+</body>
+</html>
