@@ -205,7 +205,7 @@ function saveData() {
 
 // 9. Reset de Ventas (Botón Secreto Nutria)
 function resetVentasDia() {
-  const confirmacion = confirm("⚠️ ¿Seguro que quieres cerrar la caja y poner la venta acumulada en $0? (Las mesas que sigan abiertas no se borrarán).");
+  const confirmacion = confirm("⚠️ ¿Seguro que quieres cerrar la caja y poner la venta acumulada en $0? (Las mesas que sigan abiertas no se borrarán)PD ya vamonos a dormir.");
   
   if (confirmacion) {
     totalVendidoDia = 0;
